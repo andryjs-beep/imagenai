@@ -36,18 +36,27 @@ export async function POST(req: NextRequest) {
     });
 
     // Streaming response de OpenAI
-    const stream = await openai.chat.completions.create({
-      model: aiModel,
-      messages: [
-        {
-          role: 'system',
-          content: 'Eres un asistente de IA útil y amigable. Responde siempre en el idioma del usuario.',
-        },
-        ...formattedMessages,
-      ] as any[],
-      max_tokens: 2048,
-      stream: true,
-    });
+    let stream;
+    try {
+      stream = await openai.chat.completions.create({
+        model: aiModel,
+        messages: [
+          {
+            role: 'system',
+            content: 'Eres un asistente de IA útil y amigable. Responde siempre en el idioma del usuario.',
+          },
+          ...formattedMessages,
+        ] as any[],
+        max_tokens: 2048,
+        stream: true,
+      });
+    } catch (openAiError: any) {
+      console.error('❌ Error de OpenAI:', openAiError.message || openAiError);
+      return NextResponse.json({ 
+        error: openAiError.message || 'Error en la comunicación con OpenAI',
+        type: 'openai_error' 
+      }, { status: openAiError.status || 500 });
+    }
 
     // Recolectar respuesta completa para guardar
     let fullResponse = '';
