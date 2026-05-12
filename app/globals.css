@@ -1,0 +1,133 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --navy-50: #e8edf5;
+    --navy-900: #0d1b3e;
+    --navy-950: #080f24;
+  }
+
+  * {
+    @apply border-navy-700;
+  }
+
+  body {
+    @apply bg-navy-950 text-navy-50 font-sans antialiased;
+    background-image: radial-gradient(ellipse at top left, rgba(30, 58, 122, 0.3) 0%, transparent 50%),
+                      radial-gradient(ellipse at bottom right, rgba(13, 27, 62, 0.5) 0%, transparent 50%);
+    min-height: 100vh;
+  }
+
+  ::-webkit-scrollbar {
+    @apply w-1.5;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-navy-950;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-navy-700 rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-navy-600;
+  }
+}
+
+@layer components {
+  /* Cards */
+  .card {
+    @apply bg-navy-900/60 backdrop-blur-sm border border-navy-700/50 rounded-2xl;
+  }
+  .card-hover {
+    @apply card transition-all duration-200 hover:border-accent-500/50 hover:shadow-glow hover:bg-navy-900/80;
+  }
+
+  /* Buttons */
+  .btn-primary {
+    @apply bg-accent-600 hover:bg-accent-500 text-white font-semibold py-2.5 px-6 rounded-xl
+           transition-all duration-200 shadow-glow hover:shadow-glow-lg active:scale-95
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-accent-600;
+  }
+  .btn-secondary {
+    @apply bg-navy-800 hover:bg-navy-700 text-navy-100 font-medium py-2.5 px-6 rounded-xl
+           border border-navy-600 transition-all duration-200 active:scale-95;
+  }
+  .btn-danger {
+    @apply bg-red-900/50 hover:bg-red-800/70 text-red-300 font-medium py-2 px-4 rounded-xl
+           border border-red-800/50 transition-all duration-200 active:scale-95;
+  }
+  .btn-ghost {
+    @apply text-navy-300 hover:text-navy-100 hover:bg-navy-800/60 py-2 px-4 rounded-xl
+           transition-all duration-200;
+  }
+
+  /* Inputs */
+  .input-field {
+    @apply bg-navy-900/60 border border-navy-700 rounded-xl px-4 py-3 text-navy-50
+           placeholder:text-navy-400 focus:outline-none focus:border-accent-500 focus:ring-1 
+           focus:ring-accent-500/30 transition-all duration-200 w-full;
+  }
+
+  /* Sidebar */
+  .sidebar-item {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-xl text-navy-300 text-sm font-medium
+           hover:text-navy-50 hover:bg-navy-800/70 transition-all duration-200 cursor-pointer;
+  }
+  .sidebar-item-active {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-xl text-white text-sm font-medium
+           bg-accent-600/20 border border-accent-500/30 shadow-glow;
+  }
+
+  /* Chat bubbles */
+  .bubble-user {
+    @apply bg-accent-600/90 text-white rounded-2xl rounded-tr-sm px-4 py-3 max-w-[80%] 
+           shadow-lg ml-auto;
+  }
+  .bubble-ai {
+    @apply bg-navy-800/80 text-navy-50 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[80%]
+           border border-navy-700/50;
+  }
+
+  /* Badge */
+  .badge {
+    @apply text-xs font-semibold px-2.5 py-1 rounded-full;
+  }
+  .badge-admin {
+    @apply badge bg-amber-900/50 text-amber-300 border border-amber-700/50;
+  }
+  .badge-user {
+    @apply badge bg-accent-900/50 text-accent-300 border border-accent-700/50;
+  }
+
+  /* Model selector */
+  .model-btn {
+    @apply flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200;
+  }
+  .model-btn-active {
+    @apply model-btn bg-accent-600 text-white shadow-glow;
+  }
+  .model-btn-inactive {
+    @apply model-btn text-navy-300 hover:text-navy-100 hover:bg-navy-800;
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    @apply bg-gradient-to-r from-accent-400 to-blue-300 bg-clip-text text-transparent;
+  }
+  
+  /* Loading dots */
+  .dot-flashing {
+    animation: dotFlashing 1s infinite linear alternate;
+    animation-delay: 0s;
+  }
+  .dot-flashing:nth-child(2) { animation-delay: 0.3s; }
+  .dot-flashing:nth-child(3) { animation-delay: 0.6s; }
+
+  @keyframes dotFlashing {
+    0% { opacity: 0.2; transform: scale(0.8); }
+    100% { opacity: 1; transform: scale(1.1); }
+  }
+}
