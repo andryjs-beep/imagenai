@@ -18,16 +18,22 @@ export const authOptions: NextAuthOptions = {
         }
 
         await connectDB();
+        console.log('🔍 Buscando usuario:', credentials.email.toLowerCase());
 
         const user = await User.findOne({ email: credentials.email.toLowerCase() });
         if (!user) {
+          console.log('❌ Usuario no encontrado en la base de datos');
           throw new Error('Credenciales incorrectas');
         }
 
+        console.log('✅ Usuario encontrado. Verificando contraseña...');
         const isValid = await bcrypt.compare(credentials.password, user.password);
         if (!isValid) {
+          console.log('❌ Contraseña incorrecta');
           throw new Error('Credenciales incorrectas');
         }
+
+        console.log('🎉 Autenticación exitosa para:', user.email);
 
         return {
           id: user._id.toString(),
