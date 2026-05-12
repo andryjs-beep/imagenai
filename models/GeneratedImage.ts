@@ -6,7 +6,7 @@ export interface IGeneratedImage extends Document {
   revisedPrompt?: string;
   cloudinaryUrl: string;
   cloudinaryPublicId: string;
-  model: 'gpt-4o' | 'gpt-4o-mini';
+  aiModel: string;
   size: string;
   createdAt: Date;
 }
@@ -34,10 +34,9 @@ const GeneratedImageSchema = new Schema<IGeneratedImage>(
       type: String,
       required: true,
     },
-    model: {
+    aiModel: {
       type: String,
-      enum: ['gpt-4o', 'gpt-4o-mini'],
-      default: 'gpt-4o-mini',
+      default: 'dall-e-3',
     },
     size: {
       type: String,

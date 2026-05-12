@@ -10,7 +10,7 @@ export interface IMessage {
 export interface IConversation extends Document {
   userId: mongoose.Types.ObjectId;
   title: string;
-  model: 'gpt-4o' | 'gpt-4o-mini';
+  aiModel: 'gpt-4o' | 'gpt-4o-mini';
   messages: IMessage[];
   createdAt: Date;
   updatedAt: Date;
@@ -36,7 +36,7 @@ const ConversationSchema = new Schema<IConversation>(
       default: 'Nueva conversación',
       maxlength: 100,
     },
-    model: {
+    aiModel: {
       type: String,
       enum: ['gpt-4o', 'gpt-4o-mini'],
       default: 'gpt-4o-mini',

@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    const { messages, model = 'gpt-4o-mini', conversationId, title } = await req.json();
+    const { messages, model: aiModel = 'gpt-4o-mini', conversationId, title } = await req.json();
 
     if (!messages || !Array.isArray(messages)) {
       return NextResponse.json({ error: 'Mensajes inválidos' }, { status: 400 });
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
 
     // Streaming response de OpenAI
     const stream = await openai.chat.completions.create({
-      model,
+      model: aiModel,
       messages: [
         {
           role: 'system',
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
                     ],
                   },
                 },
-                model,
+                aiModel,
               }
             );
           } else {
@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
             await Conversation.create({
               userId: session.user.id,
               title: autoTitle,
-              model,
+              aiModel,
               messages: [
                 { role: 'user', content: lastUserMessage.content, imageUrl: lastUserMessage.imageUrl, timestamp: new Date() },
                 { role: 'assistant', content: fullResponse, timestamp: new Date() },

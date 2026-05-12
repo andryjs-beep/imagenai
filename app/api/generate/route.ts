@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
       revisedPrompt,
       cloudinaryUrl: cloudinaryResult.secure_url,
       cloudinaryPublicId: cloudinaryResult.public_id,
-      model: 'dall-e-3',
+      aiModel: 'dall-e-3',
       size,
     });
 

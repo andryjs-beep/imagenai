@@ -12,7 +12,7 @@ import {
 interface Conversation {
   _id: string;
   title: string;
-  model: string;
+  aiModel: string;
   updatedAt: string;
 }
 

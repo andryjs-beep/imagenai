@@ -14,7 +14,7 @@ export async function GET() {
 
     await connectDB();
     const conversations = await Conversation.find({ userId: session.user.id })
-      .select('_id title model createdAt updatedAt')
+      .select('_id title aiModel createdAt updatedAt')
       .sort({ updatedAt: -1 })
       .limit(50)
       .lean();
