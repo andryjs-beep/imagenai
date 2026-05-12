@@ -35,40 +35,54 @@ export async function POST(req: NextRequest) {
       };
     });
 
-    // 1. Detectar si el usuario quiere generar una imagen (Mejora de UX)
+    // 1. Detectar si el usuario quiere generar una imagen
     const lastMessage = messages[messages.length - 1].content.toLowerCase();
-    const isImageRequest = lastMessage.includes('genera una imagen') || 
-                          lastMessage.includes('crea una imagen') || 
-                          lastMessage.includes('dibújame') ||
-                          lastMessage.includes('dibujame');
+    const hasImage = messages.some((msg: any) => msg.imageUrl);
+    const isImageRequest = lastMessage.includes('genera') || 
+                          lastMessage.includes('crea') || 
+                          lastMessage.includes('dibuja') ||
+                          lastMessage.includes('imagen');
 
     if (isImageRequest) {
-      console.log('🎨 Detectada solicitud de imagen. Llamando a DALL-E 3...');
+      console.log('🎨 Detectada solicitud de imagen compleja.');
+      let finalPrompt = lastMessage;
+
+      // Si hay una imagen, primero le pedimos a GPT-4o que la describa para DALL-E
+      if (hasImage) {
+        console.log('👁️ Analizando imagen para guiar a DALL-E...');
+        const visionResponse = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: [
+            {
+              role: "system",
+              content: "Describe esta imagen de forma técnica y artística para un generador de imágenes. Evita nombres de personajes con copyright, usa descripciones genéricas como 'princesa de cuento', 'niña con lazo'. Enfócate en la composición, colores y formas."
+            },
+            ...formattedMessages
+          ] as any[]
+        });
+        const description = visionResponse.choices[0].message.content;
+        finalPrompt = `Basado en esta composición: ${description}. Aplica este estilo: ${lastMessage}`;
+      }
+
+      // Llamada a DALL-E 3 con el prompt "curado"
       const imageResponse = await openai.images.generate({
         model: "dall-e-3",
-        prompt: lastMessage,
+        prompt: finalPrompt.slice(0, 3800), // Limitar longitud
         n: 1,
         size: "1024x1024",
       });
 
-      if (!imageResponse.data || imageResponse.data.length === 0) {
-        throw new Error('No se pudo obtener respuesta de generación de imágenes');
-      }
+      const imageUrl = imageResponse.data[0]?.url;
+      if (!imageUrl) throw new Error('No se pudo generar la imagen');
 
-      const imageUrl = imageResponse.data[0].url;
-      
-      if (!imageUrl) {
-        throw new Error('No se pudo obtener la URL de la imagen generada');
-      }
-      
       return NextResponse.json({ 
         role: 'assistant', 
-        content: `He generado esta imagen para ti:`,
+        content: `He analizado tu imagen y he aplicado tu Prompt Maestro para generar esta nueva versión técnica en 3D:`,
         generatedImage: imageUrl 
       });
     }
 
-    // 2. Streaming response normal de OpenAI
+    // 2. Respuesta normal si no es solicitud de imagen
     let stream;
     try {
       stream = await openai.chat.completions.create({
@@ -76,7 +90,7 @@ export async function POST(req: NextRequest) {
         messages: [
           {
             role: 'system',
-            content: 'Eres un asistente de IA útil y amigable. Responde siempre en el idioma del usuario. Puedes analizar las imágenes que el usuario te envíe.',
+            content: 'Eres un asistente de IA útil y amigable. Si el usuario te envía una imagen, analízala con detalle.',
           },
           ...formattedMessages,
         ] as any[],
