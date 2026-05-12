@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
         size: "1024x1024",
       });
 
-      const imageUrl = imageResponse.data[0]?.url;
+      const imageUrl = imageResponse.data && imageResponse.data[0] ? imageResponse.data[0].url : null;
       if (!imageUrl) throw new Error('No se pudo generar la imagen');
 
       return NextResponse.json({ 
