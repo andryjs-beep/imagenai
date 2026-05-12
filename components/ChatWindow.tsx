@@ -11,6 +11,7 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   imageUrl?: string;
+  generatedImage?: string;
 }
 
 interface ChatWindowProps {
@@ -85,29 +86,45 @@ export default function ChatWindow({ conversationId, initialMessages = [], onCon
 
       if (!res.ok) throw new Error('Error en la respuesta');
 
-      const reader = res.body!.getReader();
-      const decoder = new TextDecoder();
-      let aiContent = '';
+      // Verificar si la respuesta es JSON (Imagen generada) o Stream (Texto)
+      const contentType = res.headers.get('content-type');
+      
+      if (contentType?.includes('application/json')) {
+        const data = await res.json();
+        setMessages(prev => {
+          const updated = [...prev];
+          updated[updated.length - 1] = { 
+            role: 'assistant', 
+            content: data.content, 
+            generatedImage: data.generatedImage 
+          };
+          return updated;
+        });
+      } else {
+        const reader = res.body!.getReader();
+        const decoder = new TextDecoder();
+        let aiContent = '';
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
 
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
 
-        for (const line of lines) {
-          const data = line.slice(6);
-          if (data === '[DONE]') continue;
-          try {
-            const { text } = JSON.parse(data);
-            aiContent += text;
-            setMessages(prev => {
-              const updated = [...prev];
-              updated[updated.length - 1] = { role: 'assistant', content: aiContent };
-              return updated;
-            });
-          } catch {}
+          for (const line of lines) {
+            const data = line.slice(6);
+            if (data === '[DONE]') continue;
+            try {
+              const { text } = JSON.parse(data);
+              aiContent += text;
+              setMessages(prev => {
+                const updated = [...prev];
+                updated[updated.length - 1] = { role: 'assistant', content: aiContent };
+                return updated;
+              });
+            } catch {}
+          }
         }
       }
     } catch (err: unknown) {
@@ -185,6 +202,19 @@ export default function ChatWindow({ conversationId, initialMessages = [], onCon
               {msg.imageUrl && (
                 <div className={`rounded-xl overflow-hidden ${msg.role === 'user' ? 'ml-auto' : ''}`}>
                   <Image src={msg.imageUrl} alt="Imagen adjunta" width={300} height={200} className="object-cover rounded-xl" />
+                </div>
+              )}
+              {msg.generatedImage && (
+                <div className="rounded-2xl overflow-hidden border-2 border-accent-500/30 shadow-lg shadow-accent-500/10 animate-fade-in mb-2">
+                  <a href={msg.generatedImage} target="_blank" rel="noopener noreferrer">
+                    <Image 
+                      src={msg.generatedImage} 
+                      alt="Imagen generada" 
+                      width={512} 
+                      height={512} 
+                      className="object-cover w-full h-auto cursor-zoom-in hover:scale-[1.02] transition-transform" 
+                    />
+                  </a>
                 </div>
               )}
               {msg.content && (
