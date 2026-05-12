@@ -51,7 +51,11 @@ export async function POST(req: NextRequest) {
         size: "1024x1024",
       });
 
-      const imageUrl = imageResponse.data[0]?.url;
+      if (!imageResponse.data || imageResponse.data.length === 0) {
+        throw new Error('No se pudo obtener respuesta de generación de imágenes');
+      }
+
+      const imageUrl = imageResponse.data[0].url;
       
       if (!imageUrl) {
         throw new Error('No se pudo obtener la URL de la imagen generada');
