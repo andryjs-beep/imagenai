@@ -19,17 +19,20 @@ export async function POST(req: NextRequest) {
     }
 
     // Formatear mensajes para OpenAI
-    const formattedMessages = messages.map((msg: { role: string; content: string; imageUrl?: string }) => {
-      if (msg.imageUrl) {
+    const formattedMessages = messages.map((msg: any) => {
+      if (msg.role === 'user' && msg.imageUrl) {
         return {
-          role: msg.role as 'user' | 'assistant',
+          role: 'user',
           content: [
             { type: 'text', text: msg.content },
             { type: 'image_url', image_url: { url: msg.imageUrl } },
           ],
         };
       }
-      return { role: msg.role as 'user' | 'assistant', content: msg.content };
+      return { 
+        role: msg.role as 'user' | 'assistant' | 'system', 
+        content: msg.content 
+      };
     });
 
     // Streaming response de OpenAI
@@ -41,7 +44,7 @@ export async function POST(req: NextRequest) {
           content: 'Eres un asistente de IA útil y amigable. Responde siempre en el idioma del usuario.',
         },
         ...formattedMessages,
-      ],
+      ] as any[],
       max_tokens: 2048,
       stream: true,
     });
