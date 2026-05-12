@@ -42,8 +42,15 @@ export async function POST(req: NextRequest) {
           ]
         });
         const description = visionResponse.choices[0].message.content;
-        finalPrompt = `Basado en esta composición: ${description}. Aplica este estilo: ${prompt}`;
-        console.log('✅ Prompt híbrido generado.');
+        
+        // REESTRUCTURACIÓN MAESTRA DEL PROMPT:
+        // Ponemos el estilo del usuario PRIMERO y con mayúsculas para que DALL-E le dé prioridad absoluta.
+        finalPrompt = `OBJECTIVE: Create a high-relief 3D PATCHWORK and EMBROIDERY artwork. 
+        STYLE INSTRUCTIONS: ${prompt}. 
+        COMPOSITION GUIDE: Based on a ${description}. 
+        REMINDER: No flat areas, everything must be thick fabric and heavy threads.`;
+        
+        console.log('✅ Prompt de ALTA PRIORIDAD generado.');
       } catch (visionErr) {
         console.error('Error en análisis de visión:', visionErr);
         // Si falla la visión, seguimos con el prompt original
