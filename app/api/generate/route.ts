@@ -29,7 +29,11 @@ export async function POST(req: NextRequest) {
       response_format: 'url',
     });
 
-    const imageUrl = response.data[0].url!;
+    if (!response.data || response.data.length === 0 || !response.data[0].url) {
+      throw new Error('No se pudo obtener la URL de la imagen generada');
+    }
+
+    const imageUrl = response.data[0].url;
     const revisedPrompt = response.data[0].revised_prompt;
 
     // Subir a Cloudinary en carpeta del usuario
