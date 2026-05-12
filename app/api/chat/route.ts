@@ -75,9 +75,42 @@ export async function POST(req: NextRequest) {
       const imageUrl = imageResponse.data && imageResponse.data[0] ? imageResponse.data[0].url : null;
       if (!imageUrl) throw new Error('No se pudo generar la imagen');
 
+      // GUARDAR EN EL HISTORIAL (MongoDB)
+      await connectDB();
+      const lastUserMessage = messages[messages.length - 1];
+      const assistantContent = `He analizado tu imagen y he aplicado tu Prompt Maestro para generar esta nueva versión técnica en 3D:`;
+
+      if (conversationId) {
+        await Conversation.findOneAndUpdate(
+          { _id: conversationId, userId: session.user.id },
+          {
+            $push: {
+              messages: {
+                $each: [
+                  { role: 'user', content: lastUserMessage.content, imageUrl: lastUserMessage.imageUrl, timestamp: new Date() },
+                  { role: 'assistant', content: assistantContent, timestamp: new Date() },
+                ],
+              },
+            },
+            aiModel,
+          }
+        );
+      } else {
+        const autoTitle = title || lastUserMessage.content.slice(0, 60);
+        await Conversation.create({
+          userId: session.user.id,
+          title: autoTitle,
+          aiModel,
+          messages: [
+            { role: 'user', content: lastUserMessage.content, imageUrl: lastUserMessage.imageUrl, timestamp: new Date() },
+            { role: 'assistant', content: assistantContent, timestamp: new Date() },
+          ],
+        });
+      }
+
       return NextResponse.json({ 
         role: 'assistant', 
-        content: `He analizado tu imagen y he aplicado tu Prompt Maestro para generar esta nueva versión técnica en 3D:`,
+        content: assistantContent,
         generatedImage: imageUrl 
       });
     }

@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Image from 'next/image';
-import { Sparkles, Loader2, Download, Info, ChevronDown, ChevronUp, Wand2 } from 'lucide-react';
+import { Sparkles, Loader2, Download, Info, ChevronDown, ChevronUp, Wand2, Paperclip, X } from 'lucide-react';
 
 type ImageSize = '1024x1024' | '1792x1024' | '1024x1792';
 type Quality = 'standard' | 'hd';
@@ -20,6 +20,8 @@ export default function ImageGenerator() {
   const [result, setResult] = useState<GenerationResult | null>(null);
   const [error, setError] = useState('');
   const [showRevised, setShowRevised] = useState(false);
+  const [attachedImage, setAttachedImage] = useState<{ url: string; file: File } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const suggestions = [
     'Un gato astronauta flotando en el espacio, estilo acuarela',
@@ -30,17 +32,40 @@ export default function ImageGenerator() {
     'Ciudad cyberpunk en la lluvia con luces de neón',
   ];
 
+  const uploadImage = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await fetch('/api/upload', { method: 'POST', body: formData });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    return data.url;
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    setAttachedImage({ url, file });
+    e.target.value = '';
+  };
+
   const generate = async () => {
     if (!prompt.trim()) return;
     setIsGenerating(true);
     setError('');
     setResult(null);
 
+    let imageUrl: string | undefined;
+
     try {
+      if (attachedImage) {
+        imageUrl = await uploadImage(attachedImage.file);
+      }
+
       const res = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, size, quality }),
+        body: JSON.stringify({ prompt, size, quality, imageUrl }),
       });
 
       const data = await res.json();
@@ -71,21 +96,44 @@ export default function ImageGenerator() {
           <span className="text-sm text-accent-300 font-medium">DALL-E 3</span>
         </div>
         <h1 className="text-2xl font-bold text-white">Generador de Imágenes</h1>
-        <p className="text-navy-400 text-sm">Describe la imagen que quieres crear</p>
+        <p className="text-navy-400 text-sm">Describe la imagen que quieres crear o sube una para usarla de guía</p>
       </div>
 
       {/* Main Card */}
       <div className="card p-6 space-y-5">
         {/* Prompt */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-navy-300">Descripción de la imagen</label>
+          <div className="flex justify-between items-center">
+            <label className="text-sm font-medium text-navy-300">Descripción de la imagen</label>
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-1.5 text-xs text-accent-400 hover:text-accent-300 transition-colors"
+            >
+              <Paperclip className="w-3.5 h-3.5" />
+              Adjuntar imagen guía
+            </button>
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+          </div>
+
+          {attachedImage && (
+            <div className="relative inline-block mt-2">
+              <Image src={attachedImage.url} alt="Guía" width={100} height={100} className="rounded-xl border border-accent-500/30 object-cover h-24 w-24" />
+              <button
+                onClick={() => setAttachedImage(null)}
+                className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center shadow-lg"
+              >
+                <X className="w-4 h-4 text-white" />
+              </button>
+            </div>
+          )}
+
           <textarea
             value={prompt}
             onChange={e => setPrompt(e.target.value)}
-            placeholder="Ej: Un dragón dorado volando sobre montañas nevadas al amanecer, estilo fantasía épica..."
+            placeholder="Ej: Aplica el estilo Patchwork extremo a esta imagen con hilos gruesos 3D..."
             disabled={isGenerating}
             rows={4}
-            className="input-field resize-none"
+            className="input-field resize-none mt-2"
           />
           <p className="text-xs text-navy-500">{prompt.length}/4000 caracteres</p>
         </div>
