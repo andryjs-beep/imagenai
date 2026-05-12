@@ -35,7 +35,32 @@ export async function POST(req: NextRequest) {
       };
     });
 
-    // Streaming response de OpenAI
+    // 1. Detectar si el usuario quiere generar una imagen (Mejora de UX)
+    const lastMessage = messages[messages.length - 1].content.toLowerCase();
+    const isImageRequest = lastMessage.includes('genera una imagen') || 
+                          lastMessage.includes('crea una imagen') || 
+                          lastMessage.includes('dibújame') ||
+                          lastMessage.includes('dibujame');
+
+    if (isImageRequest) {
+      console.log('🎨 Detectada solicitud de imagen. Llamando a DALL-E 3...');
+      const imageResponse = await openai.images.generate({
+        model: "dall-e-3",
+        prompt: lastMessage,
+        n: 1,
+        size: "1024x1024",
+      });
+
+      const imageUrl = imageResponse.data[0].url;
+      
+      return NextResponse.json({ 
+        role: 'assistant', 
+        content: `He generado esta imagen para ti:`,
+        generatedImage: imageUrl 
+      });
+    }
+
+    // 2. Streaming response normal de OpenAI
     let stream;
     try {
       stream = await openai.chat.completions.create({
@@ -43,7 +68,7 @@ export async function POST(req: NextRequest) {
         messages: [
           {
             role: 'system',
-            content: 'Eres un asistente de IA útil y amigable. Responde siempre en el idioma del usuario.',
+            content: 'Eres un asistente de IA útil y amigable. Responde siempre en el idioma del usuario. Puedes analizar las imágenes que el usuario te envíe.',
           },
           ...formattedMessages,
         ] as any[],
